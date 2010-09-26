@@ -22,10 +22,11 @@ my %WriteMakefileArgs = (
   'PREREQ_PM' => {
     'Dist::Zilla' => '4.102340',
     'File::Which' => '1.09',
-    'Padre' => '0.43',
+    'Padre' => '0.70',
+    'Try::Tiny' => '0.06',
     'Wx::Perl::DirTree' => '0.07'
   },
-  'VERSION' => '0.01',
+  'VERSION' => '0.02',
   'test' => {
     'TESTS' => ''
   }

@@ -11,39 +11,37 @@ use Padre::Wx       ();
 use Wx qw(:everything);
 use Wx::Event qw(:everything);
 use Dist::Zilla;
+use Dist::Zilla::App;
 use Wx::Perl::DirTree qw(:const);
 use File::Which qw(which);
 
 our @ISA = qw(Padre::Plugin);
 
-our $VERSION = '0.01';
+our $VERSION = '0.02';
 
 sub plugin_name { return 'DistZilla' }
 
-sub padre_interface { 'Padre::Plugin' => 0.43 }
+sub padre_interfaces { 'Padre::Plugin' => 0.43 }
 
 sub menu_plugins_simple {
     my $self = shift;
 
     return $self->plugin_name => [
-        'start'     => sub { $self->start },
-        'release'   => sub { $self->release },
-        'configure' => sub { $self->configure },
+        'start'   => sub { $self->start },
+        'release' => sub { $self->release },
     ]
 }
 
-sub configure {
-}
-
-sub release {
-}
+sub release {}
 
 sub start {
     my $self = shift;
+    
+    my $main = $self->main;
 
     # create dialog
     my $dialog = Wx::Dialog->new(
-        $self->main,
+        $main,
         -1,
         'Dist::Zilla',
         [ -1, -1 ],
@@ -106,7 +104,34 @@ sub start {
         my $prog = which( 'dzil' );
         return if !$prog;
         
-        $self->main->run_command( "$prog new $module" );
+        $main->run_command( "$prog new $module" );
+        
+        my $run_is_started = $main->{command};
+        
+        $main->error( $run_is_started );
+        
+        if ( $run_is_started ) {
+            (my $dir_name = $module) =~ s{::}{/}g;
+            my @parts = split /::/, $module;
+            $parts[-1] .= '.pm';
+            
+            my $file = File::Spec->catfile( $dir, $dir_name, 'lib', @parts );
+            
+            my $counter = 0;
+            while ( $run_is_started->IsAlive ) {
+                $counter++;
+            }
+            
+            if ( -e $file ) {
+                Padre::DB::History->create(
+                    type => 'files',
+                    name => $file,
+                );
+                
+                $main->setup_editor($file);
+                $main->refresh;
+            }
+        }
     }
 }
 
@@ -124,7 +149,7 @@ Padre::Plugin::DistZilla - A plugin for Padre to create modules with Dist::Zilla
 
 =head1 VERSION
 
-version 0.01
+version 0.02
 
 =head1 SYNOPSIS
 
